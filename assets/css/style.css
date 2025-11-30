@@ -2,6 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -12,6 +13,7 @@ body {
     justify-content: center;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     padding: 20px;
+    touch-action: manipulation;
 }
 
 .captcha-container {
@@ -80,9 +82,12 @@ body {
     padding: 25px;
     margin-bottom: 25px;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     position: relative;
     overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
 }
 
 .captcha-box:hover {
@@ -92,10 +97,16 @@ body {
     box-shadow: 0 10px 25px rgba(76, 175, 80, 0.15);
 }
 
+.captcha-box:active {
+    transform: translateY(-1px);
+    transition: transform 0.1s ease;
+}
+
 .captcha-box.checked {
     border-color: #4CAF50;
     background: linear-gradient(135deg, #f0fff0, #e8f5e8);
     box-shadow: 0 8px 20px rgba(76, 175, 80, 0.2);
+    transform: translateY(-2px);
 }
 
 .captcha-check {
@@ -115,11 +126,13 @@ body {
     justify-content: center;
     transition: all 0.3s ease;
     background: white;
+    flex-shrink: 0;
 }
 
 .captcha-box.checked .check-icon {
     background: #4CAF50;
     border-color: #4CAF50;
+    transform: scale(1.1);
 }
 
 .check-icon i {
@@ -154,10 +167,18 @@ body {
     border-radius: 50px;
     font-weight: 600;
     font-size: 16px;
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     width: 100%;
     position: relative;
     overflow: hidden;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 .btn-verify::before {
@@ -175,13 +196,15 @@ body {
     left: 100%;
 }
 
-.btn-verify:hover {
+.btn-verify:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 12px 30px rgba(76, 175, 80, 0.4);
 }
 
-.btn-verify:active {
+.btn-verify:active:not(:disabled) {
     transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    transition: transform 0.1s ease;
 }
 
 .btn-verify:disabled {
@@ -189,10 +212,75 @@ body {
     transform: none;
     box-shadow: none;
     cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .btn-verify:disabled:hover::before {
     left: -100%;
+}
+
+.btn-verify.active {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+}
+
+#btnText {
+    transition: opacity 0.3s ease;
+}
+
+.loading-dots {
+    display: none;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-dots span {
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { 
+        transform: scale(0); 
+        opacity: 0.5;
+    }
+    40% { 
+        transform: scale(1); 
+        opacity: 1;
+    }
+}
+
+.success-message {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #27ae60;
+    font-weight: 600;
+    margin-top: 15px;
+    padding: 12px 20px;
+    background: rgba(39, 174, 96, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(39, 174, 96, 0.2);
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .privacy-notice {
@@ -210,6 +298,7 @@ body {
     justify-content: center;
     gap: 15px;
     margin-top: 20px;
+    flex-wrap: wrap;
 }
 
 .badge {
@@ -219,39 +308,32 @@ body {
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-.loading-dots {
-    display: none;
-    gap: 4px;
+/* Анимации для улучшения UX */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
 }
 
-.loading-dots span {
-    width: 6px;
-    height: 6px;
-    background: white;
-    border-radius: 50%;
-    animation: bounce 1.4s infinite ease-in-out;
+.captcha-box.checked {
+    animation: pulse 2s infinite;
 }
 
-.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-
-@keyframes bounce {
-    0%, 80%, 100% { transform: scale(0); }
-    40% { transform: scale(1); }
-}
-
-.success-message {
-    display: none;
-    color: #27ae60;
-    font-weight: 600;
-    margin-top: 15px;
-}
-
+/* Мобильная адаптация */
 @media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
     .captcha-container {
         padding: 30px 20px;
+        margin: 10px;
+        border-radius: 15px;
     }
     
     .captcha-title {
@@ -260,46 +342,147 @@ body {
     
     .captcha-icon {
         font-size: 48px;
+        margin-bottom: 20px;
     }
-
-}
-
-/* Добавьте в style.css */
-.captcha-box {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-user-select: none;
-    user-select: none;
-}
-
-.btn-verify {
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* Улучшения для мобильных */
-@media (max-width: 480px) {
-    .captcha-container {
-        padding: 30px 20px;
-        margin: 10px;
+    
+    .captcha-description {
+        font-size: 14px;
+        margin-bottom: 25px;
     }
     
     .captcha-box {
-        padding: 20px;
+        padding: 20px 15px;
+        margin-bottom: 20px;
+    }
+    
+    .check-text {
+        font-size: 16px;
     }
     
     .btn-verify {
         padding: 14px 20px;
+        font-size: 15px;
+    }
+    
+    .security-badges {
+        gap: 10px;
+    }
+    
+    .badge {
+        padding: 6px 12px;
+        font-size: 10px;
+    }
+    
+    .privacy-notice {
+        font-size: 11px;
+        margin-top: 20px;
     }
 }
 
-/* Анимации для лучшего UX */
-.check-icon {
-    transition: all 0.3s ease;
+/* Улучшения для очень маленьких экранов */
+@media (max-width: 320px) {
+    .captcha-container {
+        padding: 25px 15px;
+    }
+    
+    .captcha-box {
+        padding: 15px 10px;
+    }
+    
+    .check-text {
+        font-size: 14px;
+    }
+    
+    .btn-verify {
+        padding: 12px 15px;
+        font-size: 14px;
+    }
 }
 
-.captcha-box {
-    transition: all 0.3s ease;
+/* Поддержка темной темы Telegram */
+@media (prefers-color-scheme: dark) {
+    .captcha-container {
+        background: rgba(45, 45, 45, 0.95);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .captcha-title {
+        color: #ffffff;
+        background: linear-gradient(135deg, #ffffff, #e0e0e0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .captcha-description {
+        color: #b0b0b0;
+    }
+    
+    .captcha-box {
+        background: rgba(60, 60, 60, 0.8);
+        border-color: #404040;
+    }
+    
+    .check-text {
+        color: #e0e0e0;
+    }
+    
+    .check-icon {
+        background: #404040;
+        border-color: #606060;
+    }
+    
+    .badge {
+        background: #404040;
+        color: #b0b0b0;
+    }
 }
 
-.btn-verify {
-    transition: all 0.3s ease;
+/* Улучшения доступности */
+.captcha-box:focus-visible {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+}
+
+.btn-verify:focus-visible {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+}
+
+/* Анимация появления */
+.captcha-container {
+    animation: containerAppear 0.6s ease-out;
+}
+
+@keyframes containerAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Улучшения для нажатия на мобильных */
+@media (hover: none) {
+    .captcha-box:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-verify:hover:not(:disabled) {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .captcha-box:active {
+        background: linear-gradient(135deg, #f0fff0, #e8f5e8);
+        transform: scale(0.98);
+    }
+    
+    .btn-verify:active:not(:disabled) {
+        transform: scale(0.98);
+    }
 }
