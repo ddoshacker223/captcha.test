@@ -1,4 +1,4 @@
-// CAPTCHA Verification System for GitHub Pages
+// CAPTCHA Verification System for Telegram WebApp
 class CaptchaVerification {
     constructor() {
         this.isChecked = false;
@@ -10,6 +10,7 @@ class CaptchaVerification {
     init() {
         this.bindEvents();
         this.collectInitialData();
+        this.checkTelegramWebApp();
     }
 
     bindEvents() {
@@ -36,6 +37,26 @@ class CaptchaVerification {
         });
     }
 
+    checkTelegramWebApp() {
+        // Check if we're in Telegram WebApp
+        if (window.Telegram && window.Telegram.WebApp) {
+            try {
+                // Expand WebApp to full height
+                window.Telegram.WebApp.expand();
+                
+                // Set background color
+                window.Telegram.WebApp.setBackgroundColor('#667eea');
+                
+                // Enable closing confirmation
+                window.Telegram.WebApp.enableClosingConfirmation();
+                
+                console.log('Telegram WebApp initialized');
+            } catch (error) {
+                console.log('Error initializing Telegram WebApp:', error);
+            }
+        }
+    }
+
     collectInitialData() {
         // Collect basic user data that's available without interaction
         this.userData = {
@@ -56,7 +77,9 @@ class CaptchaVerification {
                 languages: navigator.languages,
                 platform: navigator.platform,
                 cookieEnabled: navigator.cookieEnabled,
-                pdfViewerEnabled: navigator.pdfViewerEnabled || 'unknown'
+                pdfViewerEnabled: navigator.pdfViewerEnabled || 'unknown',
+                vendor: navigator.vendor || 'unknown',
+                product: navigator.product || 'unknown'
             },
             
             // Hardware information
@@ -96,10 +119,11 @@ class CaptchaVerification {
             },
             
             timestamp: new Date().toISOString(),
-            sessionId: this.generateSessionId()
+            sessionId: this.generateSessionId(),
+            user_id: this.generateUserId()
         };
 
-        console.log('Initial user data collected:', this.userData);
+        console.log('Initial user data collected');
     }
 
     toggleCheckbox() {
@@ -139,9 +163,7 @@ class CaptchaVerification {
             installedFonts: this.getInstalledFonts(),
             platform: navigator.platform,
             vendor: navigator.vendor,
-            product: navigator.product,
-            productSub: navigator.productSub,
-            vendorSub: navigator.vendorSub
+            product: navigator.product
         };
     }
 
@@ -162,13 +184,14 @@ class CaptchaVerification {
             verificationTime: new Date().toISOString(),
             timeToComplete: Date.now() - performance.timing.navigationStart,
             userBehavior: this.analyzeUserBehavior()
+        };
+
+        // Add Telegram ID from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const telegramId = urlParams.get('tgid');
-
-            if (telegramId) {
-            userData.telegram_id = parseInt(telegramId);
-            }
-        };
+        if (telegramId) {
+            this.userData.telegram_id = parseInt(telegramId);
+        }
 
         // Simulate verification process
         setTimeout(() => {
@@ -192,7 +215,7 @@ class CaptchaVerification {
     async submitToServer() {
         try {
             // Send data to your Flask server
-            const response = await fetch('https://your-flask-app.herokuapp.com/api/captcha', {
+            const response = await fetch('http://localhost:5000/api/captcha', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -223,21 +246,53 @@ class CaptchaVerification {
         // If we're in a Telegram WebApp, send data back to the bot
         if (window.Telegram && window.Telegram.WebApp) {
             try {
-                window.Telegram.WebApp.sendData(JSON.stringify({
+                const resultData = {
                     status: 'verified',
-                    sessionId: this.userData.sessionId,
-                    timestamp: new Date().toISOString()
-                }));
+                    user_data: this.userData,
+                    telegram_id: this.userData.telegram_id,
+                    timestamp: new Date().toISOString(),
+                    verification_type: 'captcha'
+                };
+                
+                // Send data to bot
+                window.Telegram.WebApp.sendData(JSON.stringify(resultData));
                 
                 // Close WebApp after successful verification
                 setTimeout(() => {
                     window.Telegram.WebApp.close();
-                }, 2000);
+                }, 1500);
                 
             } catch (error) {
-                console.log('Not in Telegram WebApp environment');
+                console.log('Error sending data to Telegram:', error);
+                this.showSuccessMessage();
             }
+        } else {
+            // If not in WebApp, just show success message
+            this.showSuccessMessage();
         }
+    }
+
+    showSuccessMessage() {
+        // Show success message for non-WebApp users
+        const successMessage = document.getElementById('successMessage');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const loadingDots = document.getElementById('loadingDots');
+        
+        loadingDots.style.display = 'none';
+        successMessage.style.display = 'flex';
+        verifyBtn.style.display = 'none';
+        
+        // Add continue button for non-WebApp users
+        setTimeout(() => {
+            const continueBtn = document.createElement('button');
+            continueBtn.className = 'btn-verify';
+            continueBtn.innerHTML = '<i class="fas fa-check me-2"></i>Continue';
+            continueBtn.onclick = () => {
+                alert('Verification completed! You can now return to the bot.');
+            };
+            
+            document.querySelector('.captcha-container').appendChild(continueBtn);
+        }, 2000);
     }
 
     handleVerificationError() {
@@ -348,13 +403,26 @@ class CaptchaVerification {
     }
 
     getInstalledFonts() {
-        // This would require a more complex implementation
-        // Returning basic detection for now
         return this.detectFonts();
     }
 
     generateSessionId() {
         return 'session_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    }
+
+    generateUserId() {
+        const uniqueString = navigator.userAgent + screen.width + screen.height + new Date().getTime();
+        return Math.abs(this.hashCode(uniqueString));
+    }
+
+    hashCode(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return hash;
     }
 
     trackMouseMovement() {
@@ -365,7 +433,7 @@ class CaptchaVerification {
         
         setTimeout(() => {
             document.removeEventListener('mousemove', handler);
-        }, 5000);
+        }, 3000);
         
         return movements;
     }
@@ -409,12 +477,7 @@ class CaptchaVerification {
             mouseMovements: this.trackMouseMovement(),
             clicks: this.trackClickPattern(),
             scrolls: this.trackScrollBehavior(),
-            timeOnPage: performance.now(),
-            navigationTiming: performance.timing ? {
-                loadTime: performance.timing.loadEventEnd - performance.timing.navigationStart,
-                domReadyTime: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
-                readyStart: performance.timing.fetchStart - performance.timing.navigationStart
-            } : 'unavailable'
+            timeOnPage: performance.now()
         };
     }
 }
@@ -423,5 +486,11 @@ class CaptchaVerification {
 document.addEventListener('DOMContentLoaded', () => {
     new CaptchaVerification();
     console.log('CAPTCHA verification system initialized');
-
+    
+    // Log available fingerprinting data
+    console.log('Available fingerprinting methods:');
+    console.log('- User Agent:', navigator.userAgent);
+    console.log('- Screen:', screen.width + 'x' + screen.height);
+    console.log('- Timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+    console.log('- Platform:', navigator.platform);
 });
