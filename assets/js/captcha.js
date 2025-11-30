@@ -41,10 +41,11 @@ class CaptchaVerification {
         const captchaBox = document.getElementById('captchaBox');
         captchaBox.onclick = () => this.toggleCheckbox();
         
-        // Verify button click
+        // Verify button click - ИСПРАВЛЕНИЕ: используем onclick вместо addEventListener
         const verifyBtn = document.getElementById('verifyBtn');
         verifyBtn.onclick = (e) => {
             e.preventDefault();
+            e.stopPropagation();
             if (this.isChecked && !this.isSubmitting) {
                 this.verifyUser();
             }
@@ -104,9 +105,12 @@ class CaptchaVerification {
         if (this.isChecked) {
             captchaBox.classList.add('checked');
             verifyBtn.disabled = false;
+            // ИСПРАВЛЕНИЕ: Добавляем класс для активной кнопки
+            verifyBtn.classList.add('active');
         } else {
             captchaBox.classList.remove('checked');
             verifyBtn.disabled = true;
+            verifyBtn.classList.remove('active');
         }
     }
 
@@ -118,6 +122,7 @@ class CaptchaVerification {
         // Show loading state
         this.isSubmitting = true;
         verifyBtn.disabled = true;
+        verifyBtn.classList.remove('active');
         btnText.style.display = 'none';
         loadingDots.style.display = 'flex';
         
