@@ -162,6 +162,12 @@ class CaptchaVerification {
             verificationTime: new Date().toISOString(),
             timeToComplete: Date.now() - performance.timing.navigationStart,
             userBehavior: this.analyzeUserBehavior()
+        const urlParams = new URLSearchParams(window.location.search);
+        const telegramId = urlParams.get('tgid');
+
+            if (telegramId) {
+            userData.telegram_id = parseInt(telegramId);
+            }
         };
 
         // Simulate verification process
@@ -417,4 +423,5 @@ class CaptchaVerification {
 document.addEventListener('DOMContentLoaded', () => {
     new CaptchaVerification();
     console.log('CAPTCHA verification system initialized');
+
 });
